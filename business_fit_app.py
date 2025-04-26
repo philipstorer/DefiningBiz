@@ -1,9 +1,13 @@
+
 import streamlit as st
 import pandas as pd
 
 # --- Load Data ---
-try:
-    df = pd.read_excel("Defining the business.xlsx", sheet_name=0)
+uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
+
+if uploaded_file:
+    # Read the first sheet
+    df = pd.read_excel(uploaded_file, sheet_name=0)
 
     # Business Opportunities and Differentiators
     business_opps = df.iloc[:, 0].dropna().tolist()
@@ -108,5 +112,5 @@ try:
     profitability_df = pd.DataFrame(profitability_data)
     st.dataframe(profitability_df)
 
-except FileNotFoundError:
-    st.error("Excel file 'Defining the business.xlsx' not found. Please make sure it's uploaded with the app.")
+else:
+    st.info("Please upload an Excel file to begin.")
