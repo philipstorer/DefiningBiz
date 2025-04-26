@@ -1,43 +1,66 @@
-
 import streamlit as st
 import pandas as pd
 
 # --- Load Data ---
-uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
+st.set_page_config(layout="wide")
 
-if uploaded_file:
-    # Read the first sheet
-    df = pd.read_excel(uploaded_file, sheet_name=0)
+# Apply custom CSS for better visuals
+st.markdown("""
+    <style>
+    .stSlider > div > div > div { height: 12px; }
+    h4 { font-size: 1.3rem; font-weight: 600; margin-bottom: 0.5rem; }
+    h5 { font-size: 1.1rem; font-weight: 500; margin-top: 2rem; margin-bottom: 1rem; }
+    hr { margin-top: 2rem; margin-bottom: 2rem; }
+    </style>
+""", unsafe_allow_html=True)
 
-    # Business Opportunities and Differentiators
+try:
+    df = pd.read_excel("Defining the business.xlsx", sheet_name=0)
+
     business_opps = df.iloc[:, 0].dropna().tolist()
     differentiators = df.columns[1:].tolist()
 
-    st.title("\U0001F4C8 Business Opportunity Fit Assessment")
+    st.title("Business Opportunity Fit Assessment")
 
-    st.markdown("### ✨ Rate each opportunity against our differentiators (1 = Poor Fit, 5 = Strong Fit)")
-
+    st.markdown("<h4>Fit Scores</h4>", unsafe_allow_html=True)
     scores = {}
 
     for opp in business_opps:
-        st.markdown(f"#### {opp}")
+        scores[opp] = 0
+
+    for idx, opp in enumerate(business_opps):
+        if idx < len(df):
+            for diff in differentiators:
+                scores[opp] += df.loc[idx, diff]
+
+    fit_df = pd.DataFrame(list(scores.items()), columns=["Business Opportunity", "Total Score"])
+
+    score_placeholder = st.empty()
+
+    def display_scores():
+        sorted_df = fit_df.sort_values("Total Score", ascending=False)
+        with score_placeholder.container():
+            for idx, row in sorted_df.iterrows():
+                st.metric(label=row["Business Opportunity"], value=int(row["Total Score"]))
+
+    display_scores()
+
+    st.markdown("<h4>Rate each opportunity against our differentiators (1 = Poor Fit, 5 = Strong Fit)</h4>", unsafe_allow_html=True)
+
+    for opp in business_opps:
+        st.markdown("<hr>", unsafe_allow_html=True)
+        st.markdown(f"<h5>{opp}</h5>", unsafe_allow_html=True)
         cols = st.columns(len(differentiators))
         opp_scores = []
         for idx, diff in enumerate(differentiators):
             with cols[idx]:
-                score = st.slider(f"{diff}", 1, 5, 3, key=f"{opp}-{diff}")
+                score = st.slider(f"{diff}", 1, 5, int(df.loc[df[df.columns[0]] == opp, diff].values[0]), key=f"{opp}-{diff}", step=1)
                 opp_scores.append(score)
         scores[opp] = sum(opp_scores)
+        fit_df.loc[fit_df["Business Opportunity"] == opp, "Total Score"] = scores[opp]
+        display_scores()
 
-    st.markdown("---")
-    st.header("\U0001F4CA Fit Scores")
-    fit_df = pd.DataFrame(list(scores.items()), columns=["Business Opportunity", "Total Score"])
-
-    for idx, row in fit_df.sort_values("Total Score", ascending=False).iterrows():
-        st.metric(label=row["Business Opportunity"], value=int(row["Total Score"]))
-
-    st.markdown("---")
-    st.header("\U0001F5FA️ Ease of Entry vs Profitability")
+    st.markdown("<h4>Ease of Entry vs Profitability</h4>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
 
@@ -45,30 +68,29 @@ if uploaded_file:
         st.subheader("Easier to Enter")
         st.markdown("""
         **More Profitable**
-        - 🔥 Social Media Advertising
-        - 🔥 Influencer Marketing
-        - 🔥 Patient Ambassador Programs
+        - Social Media Advertising
+        - Influencer Marketing
+        - Patient Ambassador Programs
 
         **Less Profitable**
-        - 👍 Patient Marketing (DTC)
-        - 👍 Peer-to-Peer Marketing
+        - Patient Marketing (DTC)
+        - Peer-to-Peer Marketing
         """)
 
     with col2:
         st.subheader("Harder to Enter")
         st.markdown("""
         **More Profitable**
-        - 🚀 SaaS AI Platform
-        - 🚀 Patient Supplier Model
-        - 🚀 Market Research (Patient Insights)
+        - SaaS AI Platform
+        - Patient Supplier Model
+        - Market Research (Patient Insights)
 
         **Less Profitable**
-        - ⚠️ Clinical Trial Recruitment
-        - ⚠️ Market Access Advocacy
+        - Clinical Trial Recruitment
+        - Market Access Advocacy
         """)
 
-    st.markdown("---")
-    st.header("\U0001F4B0 Profitability Potential by Segment")
+    st.markdown("<h4>Profitability Potential by Segment</h4>", unsafe_allow_html=True)
 
     profitability_data = {
         "Segment": [
@@ -84,16 +106,16 @@ if uploaded_file:
             "Market Access Advocacy",
         ],
         "Profitability Potential": [
-            "★★★★★ Very High",
-            "★★★★☆ High",
-            "★★★★☆ High",
-            "★★★★☆ Medium-High",
-            "★★★★☆ Medium-High",
-            "★★★★☆ Medium-High",
-            "★★★☆☆ Medium",
-            "★★★☆☆ Medium",
-            "★★☆☆☆ Low-Moderate",
-            "★★☆☆☆ Low",
+            "Very High",
+            "High",
+            "High",
+            "Medium-High",
+            "Medium-High",
+            "Medium-High",
+            "Medium",
+            "Medium",
+            "Low-Moderate",
+            "Low",
         ],
         "Why": [
             "Recurring revenue, high margins (software scales without proportional headcount), very sticky once integrated into pharma/CRO workflow.",
@@ -110,7 +132,63 @@ if uploaded_file:
     }
 
     profitability_df = pd.DataFrame(profitability_data)
-    st.dataframe(profitability_df)
+    st.dataframe(profitability_df, use_container_width=True)
 
-else:
-    st.info("Please upload an Excel file to begin.")
+    st.markdown("<h4>Segment Ease of Entry and Challenges</h4>", unsafe_allow_html=True)
+
+    challenges_data = {
+        "Segment": [
+            "Patient Marketing (DTC)",
+            "Social Media Advertising",
+            "Influencer Marketing",
+            "Patient Ambassador Programs",
+            "Peer-to-Peer Marketing",
+            "Market Research (Patient Insights)",
+            "Patient Supplier (Performance-Based)",
+            "Clinical Trial Recruitment",
+            "Market Access Advocacy",
+            "SaaS AI Platform",
+        ],
+        "Ease of Entry": [
+            "Easy to Moderate",
+            "Easy",
+            "Easy",
+            "Moderate",
+            "Moderate",
+            "Moderate",
+            "Moderate",
+            "Harder",
+            "Harder",
+            "Hardest",
+        ],
+        "Why": [
+            "Huge spend, constant demand, pharma already outsources marketing, digital patient targeting is hot, and agencies are always looking for partners/tools to differentiate.",
+            "Pharma knows they need better social media engagement but many agencies are weak at patient targeting; offering AI targeting and patient-first creative will be welcomed.",
+            "Fast-growing area, pharma is just starting to use patient and physician influencers, very few companies are specialized here. Low competition compared to other segments.",
+            "Pharma is expanding ambassador programs, but few vendors are truly specialized. If you combine tech (matching, tracking) and human support, you have a unique offer.",
+            "Growing interest in community-based patient engagement; pharma values organic reach. Less structured RFPs mean easier to innovate.",
+            "Pharma always needs patient insights, and the move toward patient-centered research is strong. If you can recruit fast and analyze smartly (AI), you have an edge.",
+            "Sponsors LOVE pay-per-patient models. Huge upside if you can deliver patients — big pharma trials and support programs desperately need new sources.",
+            "Big need, growing budgets, AI is attractive — but pharma CROs are conservative and trial recruitment is highly regulated and competitive.",
+            "Pharma cares about patient voices in market access, but these budgets are smaller and advocacy groups already have pharma relationships.",
+            "Massive long-term opportunity, recurring revenue potential, and huge scalability if successful. But hard to land first few customers because pharma is slow to buy pure SaaS without proof."
+        ],
+        "Challenges": [
+            "Need relationships with brand teams or agencies. Compliance and medical/legal approval can slow campaign launch times.",
+            "Pharma is cautious about public posts (regulatory fears), so approvals can slow down execution.",
+            "Heavy compliance burden: training influencers to follow FDA rules, and close oversight required.",
+            "Requires recruiting/training ambassadors; pharma will expect strong compliance and reporting.",
+            "Hard to measure direct ROI at first; pharma buyers need education about how to fund/measure it.",
+            "Competitive space (many research firms exist); pharma likes trusted partners so it can take time to win first contracts.",
+            "Risky: if you can't find enough patients affordably, you lose money.",
+            "Sponsors often have preferred vendors (e.g., CROs), slow contracting cycles, strict patient privacy/data rules.",
+            "Need deep expertise in policy/advocacy, and trust with patient groups, which takes time to build.",
+            "High cost to build, long sales cycles, pilots required, pharma prefers known brands for critical software tools."
+        ]
+    }
+
+    challenges_df = pd.DataFrame(challenges_data)
+    st.dataframe(challenges_df, use_container_width=True)
+
+except FileNotFoundError:
+    st.error("Excel file 'Defining the business.xlsx' not found. Please make sure it's uploaded with the app.")
