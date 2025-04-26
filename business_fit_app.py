@@ -4,13 +4,11 @@ import pandas as pd
 # --- Load Data ---
 st.set_page_config(layout="wide")
 
-# Apply custom CSS for better visuals
+# Cleaner font adjustments (no thicker sliders, no heavy visual breaks)
 st.markdown("""
     <style>
-    .stSlider > div > div > div { height: 12px; }
     h4 { font-size: 1.3rem; font-weight: 600; margin-bottom: 0.5rem; }
-    h5 { font-size: 1.1rem; font-weight: 500; margin-top: 2rem; margin-bottom: 1rem; }
-    hr { margin-top: 2rem; margin-bottom: 2rem; }
+    h5 { font-size: 1.1rem; font-weight: 500; margin-top: 1rem; margin-bottom: 1rem; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -48,7 +46,6 @@ try:
     st.markdown("<h4>Rate each opportunity against our differentiators (1 = Poor Fit, 5 = Strong Fit)</h4>", unsafe_allow_html=True)
 
     for opp in business_opps:
-        st.markdown("<hr>", unsafe_allow_html=True)
         st.markdown(f"<h5>{opp}</h5>", unsafe_allow_html=True)
         cols = st.columns(len(differentiators))
         opp_scores = []
